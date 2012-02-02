@@ -1,21 +1,29 @@
 -module(jar_search).
--export([find/1]).
+-export([find/2]).
 
-find(Dir) ->
-    get_files([Dir], []).
+find(Dir, SearchTerm) ->
+    Files = find_files([Dir], []).
+    % MatchingFiles = findMatchingClass(Files, SearchTerm).
     
-get_files([], Matches) ->
+findMatchingClass([], SearchTerm) ->
+    [];
+    
+findMatchingClass([File|Files], SearchTerm) ->
+    %% TODO - Open file, look for class that matches SearchTerm
+    findMatchingClass(Files, SearchTerm).
+    
+find_files([], Matches) ->
     Matches;
     
-get_files([File|Files], Matches) ->
+find_files([File|Files], Matches) ->
     case file:list_dir(File) of
-        {ok, DirFiles}   -> get_files(Files ++ prepend_path(File, DirFiles), Matches);
+        {ok, DirFiles}   -> find_files(Files ++ prepend_path(File, DirFiles), Matches);
         {error, enotdir} -> 
         	case does_file_match(File) of
-        		match -> get_files(Files, [File|Matches]);
-        		_     -> get_files(Files, Matches)
+        		match -> find_files(Files, [File|Matches]);
+        		_     -> find_files(Files, Matches)
         	end;
-        {error, _}       -> get_files(Files, Matches)
+        {error, _}    -> find_files(Files, Matches)
     end.
 
 prepend_path(Path, []) ->
@@ -29,6 +37,11 @@ does_file_match(File) ->
 		{match, _, _} -> match;
 		nomatch       -> nomatch
 	end.
+
+
+
+
+
 
 %does_file_match2(File) ->
 %    {ok, MP} = re:compile(".+\.jar"),
